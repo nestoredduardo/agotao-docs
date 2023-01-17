@@ -1,18 +1,20 @@
-import React from 'react'
-import { DocsThemeConfig } from 'nextra-theme-docs'
+import React from 'react';
+import Image from 'next/image';
+import { DocsThemeConfig } from 'nextra-theme-docs';
 
 const config: DocsThemeConfig = {
-  logo: <span>My Project</span>,
+  logo: <Image src="/isotipo.svg" alt="Agotao" width={100} height={100} />,
   project: {
-    link: 'https://github.com/shuding/nextra-docs-template',
+    link: 'https://agotao.com/',
   },
   chat: {
-    link: 'https://discord.com',
+    link: 'https://twitter.com/nestoredduardo',
+    icon: '🐤 twitter',
   },
-  docsRepositoryBase: 'https://github.com/shuding/nextra-docs-template',
+  docsRepositoryBase: 'https://github.com/nestoredduardo/agotao-docs',
   footer: {
-    text: 'Nextra Docs Template',
+    text: 'Agotao API',
   },
-}
+};
 
-export default config
+export default config;
