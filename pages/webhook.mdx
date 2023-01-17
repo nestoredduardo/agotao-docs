@@ -1,0 +1,50 @@
+# Webhook
+
+## ¿Qué es un webhook?
+
+Un webhook es una forma de recibir notificaciones de eventos en tu aplicación. Por ejemplo, cuando el pago de un usuario es validado recibes una notificación en la URL que hayas configurado con los datos de la compra.
+
+## Implementación
+
+Cuando se valide el pago del usuario se hace un request tipo POST a la webhook_url definida en tu dashboard.
+
+Deberás comparar que el bearer token del request sea la secret key que se muestra en tu dashboard. 'Bearer API_SECRET_KEY' para que puedas validar que el request es de Agotao.
+
+Ejemplo de implementación en Node.js:
+
+```js filename="server.js"
+const express = require('express');
+const bodyParser = require('body-parser');
+
+const app = express();
+app.use(bodyParser.json());
+
+app.post('/agotao-webhook', (req, res) => {
+  const { headers, body } = req;
+
+  if (headers.authorization !== `Bearer ${process.env.API_SECRET_KEY}`) {
+    return res.status(401).send('Unauthorized');
+  }
+
+  // Aquí puedes procesar el pago
+  console.log(body);
+
+  res.status(200).send('OK');
+});
+```
+
+El body que recibirás es un JSON con la información del pago, por ejemplo:
+
+```json
+{
+  "type": "succeeded",
+  "id": "ID_DE_LA_COMPRA",
+  "amount": 50, // en soles
+  "commission": 2.5, // en soles
+  "payment_method": "BCP", // BCP, BBVA, INTERBANK, Yape, PLIN
+  "metadata": {
+    // metadata que envías al crear el checkout
+    "order_id": "ID_DE_LA_ORDEN"
+  }
+}
+```
