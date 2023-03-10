@@ -1,3 +1,5 @@
+import { Tab, Tabs } from 'nextra-theme-docs';
+
 # Checkout
 
 Explora como se ve una integración con Agotao Checkout. El código del lado del cliente y del servidor redirige a tu usuario a una página de pago en Agotao.
@@ -8,47 +10,97 @@ Los metodos de pago aceptados son transferencias BBVA, Yape, BCP, Yape, Plin
 
 Desde tu servidor crea una checkout session. Las checkout sessions son validas durante 15 minutos, si tu cliente no realiza el pago, la checkout sesion expira y ya no puede ser utilizada.
 
-```js filename="server.js"
-const express = require('express');
-const app = express();
-app.use(express.static('public'));
+<Tabs items={['Javascript','PHP']}>
+  <Tab>
+    ```js filename="server.js"
+    const express = require('express');
+    const app = express();
+    app.use(express.static('public'));
 
-const YOUR_DOMAIN = 'http://localhost:4242';
-
-app.post('/create-checkout-session', async (req, res) => {
-  const session = await axios.post(
-    'https://api.agotao.com/api/v1/checkout/sessions',
-    {
-      items: [
+    app.post('/create-checkout-session', async (req, res) => {
+      const session = await axios.post(
+        'https://api.agotao.com/api/v1/checkout/sessions',
         {
-          product_id: 'product1', // encuentra el id de tu producto en tu dashboard de Agotao
-          quantity: 2,
+          items: [
+            {
+              product_id: '{YOUR_PRODUCT_ID}',
+              quantity: 2,
+            },
+            {
+              product_id: '{YOUR_PRODUCT_ID}',
+              quantity: 3,
+            },
+          ],
+          cancel_url: '{https://your-website.com/cancel-url}',
+          metadata: {
+            order_id: '123456',
+            custom_field: 'custom_value',
+          },
         },
         {
-          product_id: 'product2',
-          quantity: 3,
-        },
-      ],
-      success_url: 'https://your-success-url.com',
-      cancel_url: 'https://your-cancel-url.com', // optional
-      metadata: {
-        // opcional
-        order_id: '123456',
-        custom_field: 'custom_value',
-      },
-    },
-    {
-      headers: {
-        Authorization: 'Bearer SECRET_KEY', // encuentra tu secret key en tu dashboard de Agotao
-        'Content-Type': 'application/json',
-      },
-    }
-  );
+          headers: {
+            Authorization: 'Bearer {SECRET_KEY}',
+            'Content-Type': 'application/json',
+          },
+        }
+      );
 
-  res.redirect(303, session.url); // redirige a la pagina de pago
-});
+      res.redirect(303, session.url);
+    });
 
-app.listen(4242, () => console.log('Running on port 4242'));
+    app.listen(4242, () => console.log('Running on port 4242'));
+    ```
+
+  </Tab>
+  <Tab>
+    ```php filename="server.php"
+    <?php
+    $curl = curl_init();
+
+    curl_setopt_array($curl,
+      array(
+        CURLOPT_URL => 'https://api.agotao.com/api/v1/checkout/sessions',
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_ENCODING => '',
+        CURLOPT_MAXREDIRS => 10,
+        CURLOPT_TIMEOUT => 0,
+        CURLOPT_FOLLOWLOCATION => true,
+        CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
+        CURLOPT_CUSTOMREQUEST => 'POST',
+        CURLOPT_POSTFIELDS =>'{"items": [{"product_id": "YOUR_PRODUCT_ID","quantity": 1}], "cancel_url": "www.agotao.com", "metadata": { "some": "metadata", "json": 5  }}',
+        CURLOPT_HTTPHEADER => array('Authorization: Bearer {YOUR_SECRET_KEY}', 'Content-Type: application/json'),
+      )
+    );
+
+    $response = curl_exec($curl);
+
+    curl_close($curl);
+
+    echo $response;
+    ?>
+    ```
+
+  </Tab>
+</Tabs>
+
+### Parámetros disponibles
+
+**Header Parameters**
+
+```
+Authorization: Bearer {SECRET_KEY}
+Content-Type: application/json
+```
+
+**Body Parameters**
+
+```json
+{
+  "items": "Array que contiene los productos del checkout",
+  "cancel_url": "URL a la que se redirige al usuario si sale del checkout",
+  "metadata": "Objeto con la metadata que se desea enviar, cuando el pago es exitoso se envía
+  la metadata al webhook"
+}
 ```
 
 La respuesta de la API <code>/checkout/sessions</code> tiene la siguiente estructura:
@@ -67,4 +119,4 @@ La respuesta de la API <code>/checkout/sessions</code> tiene la siguiente estruc
 }
 ```
 
-Cuando envíes al usuario a la URL de pago, el usuario puede completar el pago con una de las opciones de pago disponibles. Si el pago es exitoso, el usuario será redirigido a la URL de éxito.
+Cuando envíes al usuario a la URL de pago, el usuario puede completar el pago con una de las opciones de pago disponibles. Si el pago es exitoso, se te envía un webhook con la información del pago.
