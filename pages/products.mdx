@@ -1,0 +1,197 @@
+import { Tab, Tabs } from 'nextra-theme-docs';
+
+# Productos
+
+Los productos son los bienes o servicios que ofreces a tus clientes. Puedes crear productos desde el dashboard de Agotao o utilizando la API.
+
+## Crear un producto - /api/v1/product
+
+Creas un nuevo producto.
+
+**Encabezados de solicitud**
+
+- `Authorization` - Token único de una empresa válida en Agotao, lo encuentras en tu dashboard. Esto se utiliza para autenticar la solicitud y determinar que el producto le pertenece a la empresa.
+
+**Cuerpo de la solicitud**
+
+El cuerpo de la solicitud debe ser un objeto JSON con las siguientes propiedades:
+
+- `name` - El nombre del producto (obligatorio).
+- `price` - El precio del producto (obligatorio).
+- `image` - La URL de la imagen del producto (obligatorio).
+- `metadata` - Un objeto opcional que contiene metadatos adicionales sobre el producto.
+
+Ejemplo:
+
+```json
+{
+  "name": "iPhone 13",
+  "price": 1099,
+  "image": "https://example.com/iphone-13.jpg",
+  "metadata": {
+    "color": "negro",
+    "almacenamiento": "256 GB"
+  }
+}
+```
+
+**Respuesta**
+
+Si la solicitud es exitosa, la API devolverá un objeto JSON con las siguientes propiedades:
+
+- product - Un objeto que contiene información sobre el producto recién creado. Este objeto tiene las siguientes propiedades:
+- id - El identificador único del producto.
+- name - El nombre del producto.
+- price - El precio del producto.
+- image - La URL de la imagen del producto.
+- metadata - Un objeto que contiene cualquier metadato que se haya incluido en la solicitud.
+
+Ejemplo:
+
+```json
+{
+  "product": {
+    "id": 1,
+    "name": "iPhone 13",
+    "price": 1099,
+    "image": "https://example.com/iphone-13.jpg"
+  },
+  "metadata": {
+    "color": "negro",
+    "almacenamiento": "256 GB"
+  }
+}
+```
+
+**Respuestas de error**
+
+Si se produce un error durante el procesamiento de la solicitud, la API devolverá un objeto JSON con las siguientes propiedades:
+
+- message - Una descripción del error.
+- statusCode - El código de estado HTTP asociado con el error.
+
+Ejemplo:
+
+```json
+{
+  "message": "Token inválido",
+  "statusCode": 401
+}
+```
+
+**Ejemplo de uso**
+
+<Tabs items={['Javascript','PHP']}>
+  <Tab>
+    ```js filename="server.js"
+    const express = require('express');
+    const fetch = require('node-fetch');
+
+    const app = express();
+    const apiUrl = 'https://api.agotao.com/api/v1/product';
+
+    app.use(express.json());
+
+    app.post('/products', async (req, res) => {
+      const token = req.headers.authorization?.replace('Bearer ', '');
+      const newProduct = req.body;
+
+      try {
+        const response = await fetch(apiUrl, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify(newProduct)
+        });
+
+        const data = await response.json();
+        res.status(response.status).json(data);
+      } catch (error) {
+        console.error('Se produjo un error al crear el producto:', error.message);
+        res.status(500).json({ message: 'Se produjo un error al crear el producto' });
+      }
+    });
+
+    app.listen(3000, () => {
+      console.log('Servidor iniciado en el puerto 3000');
+    });
+
+    ```
+
+  </Tab>
+  <Tab>
+    ```php filename="server.php"
+    <?php
+    require_once 'vendor/autoload.php'; // Incluir las dependencias necesarias
+    use GuzzleHttp\Client;
+    use GuzzleHttp\Exception\ClientException;
+    use GuzzleHttp\Exception\ServerException;
+
+    // Definir los datos del producto
+    $productData = array(
+        'name' => 'Producto de ejemplo',
+        'price' => 9.99,
+        'image' => 'https://ejemplo.com/imagen.jpg',
+        'metadata' => array(
+            'color' => 'rojo',
+            'tamaño' => 'mediano',
+        )
+    );
+
+    // Definir el token de autorización
+    $token = 'sk_live_123';
+
+    // Definir la URL del endpoint
+    $url = 'https://api.agotao.com/api/v1/product';
+
+    // Definir el cliente HTTP de Guzzle
+    $client = new Client();
+
+    try {
+        // Realizar la petición HTTP al endpoint con el método POST
+        $response = $client->post($url, array(
+            'headers' => array(
+                'Authorization' => 'Bearer ' . $token,
+                'Content-Type' => 'application/json'
+            ),
+            'json' => $productData
+        ));
+
+        // Obtener el cuerpo de la respuesta HTTP
+        $body = $response->getBody();
+
+        // Decodificar el cuerpo de la respuesta HTTP a un array asociativo de PHP
+        $responseData = json_decode($body, true);
+
+        // Imprimir los datos del producto creado
+        echo 'Producto creado:';
+        echo '<br>';
+        echo 'ID: ' . $responseData['product']['id'];
+        echo '<br>';
+        echo 'Nombre: ' . $responseData['product']['name'];
+        echo '<br>';
+        echo 'Precio: ' . $responseData['product']['price'];
+        echo '<br>';
+        echo 'Imagen: ' . $responseData['product']['image'];
+        echo '<br>';
+        echo 'Metadatos: ';
+        print_r($responseData['metadata']);
+
+    } catch (ClientException $e) {
+        // Capturar las excepciones de cliente (errores 4xx)
+        $response = $e->getResponse();
+        $body = $response->getBody();
+        $responseData = json_decode($body, true);
+        echo 'Error ' . $response->getStatusCode() . ': ' . $responseData['message'];
+
+    } catch (ServerException $e) {
+        // Capturar las excepciones de servidor (errores 5xx)
+        echo 'Error del servidor: ' . $e->getMessage();
+    }
+
+    ```
+
+  </Tab>
+</Tabs>
